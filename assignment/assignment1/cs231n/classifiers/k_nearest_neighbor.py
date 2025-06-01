@@ -69,13 +69,7 @@ class KNearestNeighbor(object):
         dists = np.zeros((num_test, num_train))
         for i in range(num_test):
             for j in range(num_train):
-                #####################################################################
-                # TODO:                                                             #
-                # Compute the l2 distance between the ith test point and the jth    #
-                # training point, and store the result in dists[i, j]. You should   #
-                # not use a loop over dimension, nor use np.linalg.norm().          #
-                #####################################################################
-                pass
+                dists[i,j] = np.sqrt(np.sum(np.square(self.X_train[j] - X[i])))
         return dists
 
     def compute_distances_one_loop(self, X):
@@ -95,7 +89,7 @@ class KNearestNeighbor(object):
             # points, and store the result in dists[i, :].                        #
             # Do not use np.linalg.norm().                                        #
             #######################################################################
-            pass
+            dists[i] = np.sqrt(np.sum(np.square(self.X_train - X[i,:]),axis=1))
         return dists
 
     def compute_distances_no_loops(self, X):
@@ -121,7 +115,16 @@ class KNearestNeighbor(object):
         # HINT: Try to formulate the l2 distance using matrix multiplication    #
         #       and two broadcast sums.                                         #
         #########################################################################
-
+        
+        #testデータのノルムの2乗:(num_test,1)
+        X_square = np.sum(np.square(X), axis=1, keepdims=True)
+        #trainデータのノルムの2乗:(1,num_train)
+        X_train_square = np.sum(np.square(self.X_train), axis=1, keepdims=True).T
+        #testデータとtrainデータの内積(num_test,num_train)
+        cross_term = X @ self.X_train.T
+        #距離の２乗を計算してルートを取る
+        dists = np.sqrt(X_square + X_train_square - 2*cross_term)
+        
         return dists
 
     def predict_labels(self, dists, k=1):
@@ -150,7 +153,7 @@ class KNearestNeighbor(object):
             # neighbors. Store these labels in closest_y.                           #
             # Hint: Look up the function numpy.argsort.                             #
             #########################################################################
-
+            closests_indices = np.argsort(dists[i])[:k]
 
             #########################################################################
             # TODO:                                                                 #
@@ -160,5 +163,9 @@ class KNearestNeighbor(object):
             # label.                                                                #
             #########################################################################
 
+            closest_y = self.y_train[closests_indices]
+
+            count = np.bincount(closest_y)
+            y_pred[i] = np.argmax(count)
 
         return y_pred
